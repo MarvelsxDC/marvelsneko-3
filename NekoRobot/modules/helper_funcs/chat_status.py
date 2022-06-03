@@ -1,25 +1,4 @@
-"""
-MIT License
-Copyright (C) 2017-2019, Paul Larsen
-Copyright (C) 2022 Hodacka
-Copyright (c) 2022, Yūki • Black Knights Union, <https://github.com/Hodacka/NekoRobot-3>
-This file is part of @NekoXRobot (Telegram Bot)
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the Software), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-"""
+import random
 
 from time import perf_counter
 from functools import wraps
@@ -34,6 +13,7 @@ from NekoRobot import (
     TIGERS,
     WOLVES,
     dispatcher,
+    # KING,
 )
 
 from telegram import Chat, ChatMember, ParseMode, Update, User
@@ -63,6 +43,9 @@ def user_can_changeinfo(chat: Chat, user: User, bot_id: int) -> bool:
 
 def user_can_promote(chat: Chat, user: User, bot_id: int) -> bool:
     return chat.get_member(user.id).can_promote_members
+
+def can_manage_voice_chats(chat: Chat, user: User, bot_id: int) -> bool: 
+    return chat.get_member(user.id).can_manage_voicechats
 
 def user_can_pin(chat: Chat, user: User, bot_id: int) -> bool:
     return chat.get_member(user.id).can_pin_messages
@@ -196,7 +179,7 @@ def stats_plus(func):
                 pass
         else:
             update.effective_message.reply_text(
-                "Neko stats is just for Dev User",
+                "Miku stats is just for Dev User",
             )
 
     return is_sudo_plus_func
@@ -448,6 +431,23 @@ def connection_status(func):
         return func(update, context, *args, **kwargs)
 
     return connected_status
+
+def user_can_change(func):	
+
+    @wraps(func)	
+    def info_changer(update, context, *args, **kwargs):	
+        user = update.effective_user.id	
+        member = update.effective_chat.get_member(user)	
+        
+
+        if not (member.can_change_info or member.status == "creator") and not user in SUDO_USERS:
+            update.effective_message.reply_text("You are missing the following rights to use this command: \nCanChangeInfo")
+                   	
+            return ""	
+
+        return func(update, context, *args, **kwargs)	
+
+    return info_changer
 
 from NekoRobot.modules import connection
 
